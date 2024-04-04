@@ -50,8 +50,6 @@ public class BlockDecay implements ModInitializer {
 		new Timer(MOD_ID + "-timer").schedule(new TimerTask() {
 					@Override
 					public void run() {
-						LOGGER.warn("decay");
-
 						BlockPos blockPos = blockHitResult.getBlockPos().offset(blockHitResult.getSide(), 1);
 
                         for (Map.Entry<BlockPos, Integer> entry : blockDecayPositionMap.entrySet()) {

@@ -7,13 +7,19 @@ import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Hand;
 import net.minecraft.util.hit.BlockHitResult;
+import net.minecraft.util.hit.HitResult;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Position;
 import net.minecraft.world.World;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.Duration;
+import java.time.temporal.ChronoUnit;
 import java.util.Map;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class BlockDecay implements ModInitializer {
@@ -23,7 +29,7 @@ public class BlockDecay implements ModInitializer {
 	public static final String MOD_ID = "block-decay";
     public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
 	public static boolean isActive = false;
-	public static final Map<Position, Integer> blockDecayPositionMap = new ConcurrentHashMap<>();
+	public static final Map<BlockPos, Integer> blockDecayPositionMap = new ConcurrentHashMap<>();
 
 	@Override
 	public void onInitialize() {
@@ -39,8 +45,26 @@ public class BlockDecay implements ModInitializer {
 		if (!isActive) return ActionResult.PASS;
 		if (playerEntity.isSpectator()) return ActionResult.PASS;
 		if (world.isClient()) return ActionResult.PASS;
-		//if (playerEntity.hasPermissionLevel(4)) return ActionResult.PASS;
-		LOGGER.warn("decay");
+		if (playerEntity.hasPermissionLevel(4)) return ActionResult.PASS;
+
+		new Timer(MOD_ID + "-timer").schedule(new TimerTask() {
+					@Override
+					public void run() {
+						LOGGER.warn("decay");
+
+						BlockPos blockPos = blockHitResult.getBlockPos().offset(blockHitResult.getSide(), 1);
+
+                        for (Map.Entry<BlockPos, Integer> entry : blockDecayPositionMap.entrySet()) {
+                            BlockPos position = entry.getKey();
+                            Integer radius = entry.getValue();
+                            if (position.isWithinDistance(blockPos, radius)) {
+                                world.removeBlock(blockPos, false);
+								return;
+                            }
+                        }
+                    }
+				}
+				, Duration.of(10, ChronoUnit.SECONDS).toMillis());
 
 		return ActionResult.PASS;
 	}
